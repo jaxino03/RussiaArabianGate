@@ -1,4 +1,19 @@
 (function () {
+  /* GitHub Pages project sites need a trailing slash for relative assets */
+  if (/github\.io$/i.test(location.hostname)) {
+    const parts = location.pathname.split("/").filter(Boolean);
+    const isRepoRoot =
+      parts.length === 1 &&
+      !location.pathname.endsWith("/") &&
+      !/\.[a-z0-9]+$/i.test(location.pathname);
+    if (isRepoRoot) {
+      location.replace(
+        location.origin + "/" + parts[0] + "/" + location.search + location.hash
+      );
+      return;
+    }
+  }
+
   const LANG_KEY = "penzastudy-lang";
   const EMAIL = "rumocgate@gmail.com";
 
@@ -183,12 +198,25 @@
     return entry[pickDict(lang)] ?? entry.en;
   }
 
-  function mailtoHref(lang) {
+  function gmailComposeHref(lang) {
     const subject =
       lang === "ar"
         ? "استفسار — الدراسة في بنزا / جامعة بنزا الحكومية"
         : "Inquiry — Study in Penza / Penza State University";
-    return "mailto:" + EMAIL + "?subject=" + encodeURIComponent(subject);
+    const params = new URLSearchParams({
+      view: "cm",
+      fs: "1",
+      to: EMAIL,
+      su: subject,
+    });
+    return "https://mail.google.com/mail/?" + params.toString();
+  }
+
+  function setEmailLink(el, lang) {
+    if (!el) return;
+    el.setAttribute("href", gmailComposeHref(lang));
+    el.setAttribute("target", "_blank");
+    el.setAttribute("rel", "noopener noreferrer");
   }
 
   function applyLang(iso) {
@@ -221,8 +249,8 @@
       if (key && T[key]) el.setAttribute("title", tr(lang, key));
     });
 
-    const emailBtn = document.getElementById("contact-email-btn");
-    if (emailBtn) emailBtn.setAttribute("href", mailtoHref(lang));
+    setEmailLink(document.getElementById("contact-email-btn"), lang);
+    setEmailLink(document.getElementById("footer-email-link"), lang);
 
     const langGroup = document.querySelector(".lang-switch");
     if (langGroup) langGroup.setAttribute("aria-label", tr(lang, "lang_group"));
